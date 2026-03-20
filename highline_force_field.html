@@ -41,11 +41,14 @@ h1 { font-size: 19px; font-weight: 500; margin-bottom: 2px; }
 .mode-wrap { display: flex; gap: 6px; margin-bottom: 14px; }
 .mbtn { flex: 1; padding: 9px 6px; border-radius: 8px; font-size: 11px; font-weight: 500; border: 1px solid var(--border2); background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit; text-align: center; line-height: 1.4; }
 .mbtn.act { background: var(--bg); color: var(--text); box-shadow: 0 0 0 2px var(--blue); border-color: var(--blue); }
-.inputs { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-@media (max-width: 380px) { .inputs { grid-template-columns: 1fr; } }
+.inputs { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+@media (max-width: 500px) { .inputs { grid-template-columns: 1fr 1fr; } } @media (max-width: 320px) { .inputs { grid-template-columns: 1fr; } }
 .field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
 .field input { display: block; width: 100%; font-size: 18px; font-weight: 500; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg); color: var(--text); font-family: inherit; -webkit-appearance: none; appearance: none; }
 .field input:focus { outline: none; box-shadow: 0 0 0 2px var(--blue); }
+.field input.solved { background: var(--bg3); color: var(--text3); border-color: var(--border); font-style: italic; pointer-events: none; }
+.field label.solved { color: var(--text3); }
+.field .hint.solved { color: var(--text3); }
 .hint { font-size: 11px; color: var(--text3); margin-top: 3px; }
 .warn { border-radius: 10px; padding: 11px 14px; font-size: 13px; font-weight: 500; line-height: 1.6; margin-bottom: 12px; border: 1px solid; display: none; }
 .wr { background: var(--red-bg);   color: var(--red-text);   border-color: var(--red);   }
@@ -97,19 +100,19 @@ canvas { display: block; width: 100%; }
     <div class="hint">A to B</div>
   </div>
   <div class="field" id="fA">
-    <label for="iA">Angle (°)</label>
+    <label for="iA" id="lA">Angle (°)</label>
     <input type="number" id="iA" value="150" min="1" max="179" step="1" inputmode="numeric">
-    <div class="hint">included, 180°=flat</div>
+    <div class="hint" id="hA">included, 180°=flat</div>
   </div>
-  <div class="field" id="fG" style="display:none">
-    <label for="iG">Sag (ft)</label>
+  <div class="field" id="fG">
+    <label for="iG" id="lG">Sag (ft)</label>
     <input type="number" id="iG" value="4" min="0.1" step="0.5" inputmode="decimal">
-    <div class="hint">midspan drop</div>
+    <div class="hint" id="hG">midspan drop</div>
   </div>
-  <div class="field" id="fT" style="display:none">
-    <label for="iT">Tension (lbs)</label>
+  <div class="field" id="fT">
+    <label for="iT" id="lT">Tension (lbs)</label>
     <input type="number" id="iT" value="500" min="1" step="10" inputmode="numeric">
-    <div class="hint">per anchor</div>
+    <div class="hint" id="hT">per anchor</div>
   </div>
 </div>
 
@@ -159,9 +162,34 @@ canvas { display: block; width: 100%; }
     document.getElementById("mA").className = "mbtn" + (m==="angle"?" act":"");
     document.getElementById("mS").className = "mbtn" + (m==="sag"?" act":"");
     document.getElementById("mT").className = "mbtn" + (m==="tension"?" act":"");
-    document.getElementById("fA").style.display = m==="angle"   ? "" : "none";
-    document.getElementById("fG").style.display = m==="sag"     ? "" : "none";
-    document.getElementById("fT").style.display = m==="tension" ? "" : "none";
+
+    // Grey out solved fields, keep all visible so values persist
+    var cfg = {
+      iA: m==="angle",
+      iG: m==="sag",
+      iT: m==="tension"
+    };
+    Object.keys(cfg).forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      if(cfg[id]){
+        el.className = "";
+        el.removeAttribute("readonly");
+      } else {
+        el.className = "solved";
+        el.setAttribute("readonly","");
+      }
+    });
+    // Update solved field labels
+    var lblMap = { iA:"lA", iG:"lG", iT:"lT" };
+    var hntMap = { iA:"hA", iG:"hG", iT:"hT" };
+    Object.keys(cfg).forEach(function(id){
+      var lel = document.getElementById(lblMap[id]);
+      var hel = document.getElementById(hntMap[id]);
+      var active = cfg[id];
+      if(lel) lel.className = active ? "" : "solved";
+      if(hel) hel.className = active ? "hint" : "hint solved";
+    });
     go();
   }
 
@@ -398,7 +426,8 @@ canvas { display: block; width: 100%; }
 
   var rt;
   window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(go,80); });
-  go();
+  // Set initial field states
+  setMode('angle');
   setTimeout(go,120);
 }());
 </script>
