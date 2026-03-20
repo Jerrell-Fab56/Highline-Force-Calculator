@@ -46,9 +46,9 @@ h1 { font-size: 19px; font-weight: 500; margin-bottom: 2px; }
 .field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
 .field input { display: block; width: 100%; font-size: 18px; font-weight: 500; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg); color: var(--text); font-family: inherit; -webkit-appearance: none; appearance: none; }
 .field input:focus { outline: none; box-shadow: 0 0 0 2px var(--blue); }
-.field input.solved { background: var(--bg3); color: var(--text3); border-color: var(--border); font-style: italic; pointer-events: none; }
-.field label.solved { color: var(--text3); }
-.field .hint.solved { color: var(--text3); }
+.field input.solved { background: var(--bg2); color: var(--blue); border-color: var(--border); font-style: normal; pointer-events: none; font-weight: 600; }
+.field label.solved { color: var(--blue); font-weight: 500; }
+.field .hint.solved { color: var(--blue); opacity: 0.7; }
 .hint { font-size: 11px; color: var(--text3); margin-top: 3px; }
 .warn { border-radius: 10px; padding: 11px 14px; font-size: 13px; font-weight: 500; line-height: 1.6; margin-bottom: 12px; border: 1px solid; display: none; }
 .wr { background: var(--red-bg);   color: var(--red-text);   border-color: var(--red);   }
@@ -298,6 +298,11 @@ canvas { display: block; width: 100%; }
     st("dtens",  Math.round(T)+" lbs");
     st("dvert",  Math.round(Tv)+" lbs");
     st("dhoriz", Math.round(Th)+" lbs ← inward lateral");
+
+    // Write calculated values back into the solved (read-only) input fields so they update live
+    if(mode!=="angle"){   var eA=document.getElementById("iA"); if(eA) eA.value=ia.toFixed(1); }
+    if(mode!=="sag"){     var eG=document.getElementById("iG"); if(eG) eG.value=sagFt.toFixed(2); }
+    if(mode!=="tension"){ var eT=document.getElementById("iT"); if(eT) eT.value=Math.round(T); }
 
     // Rope length — parabolic approximation: L ≈ span * sqrt(1 + (8/3)*(sag/span)^2)
     // More accurate than simple Pythagoras for typical sag ratios
