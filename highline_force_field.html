@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Highline">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1c1a" media="(prefers-color-scheme: dark)">
+<title>Highline Force Calculator</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f5f4f0; --bg3: #eeede9;
+  --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+  --border: rgba(0,0,0,0.11); --border2: rgba(0,0,0,0.20);
+  --green: #3b6d11; --amber: #854f0b; --red: #a32d2d; --blue: #185fa5;
+  --green-bg: #eaf3de; --green-text: #27500a;
+  --amber-bg: #faeeda; --amber-text: #633806;
+  --red-bg:   #fcebeb; --red-text:   #7a1f1f;
+  --blue-bg:  #e6f1fb; --blue-text:  #0c447c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+    --text: #e8e6df; --text2: #9c9a92; --text3: #6b6a64;
+    --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.20);
+    --green: #639922; --amber: #ba7517; --red: #e24b4a; --blue: #378add;
+    --green-bg: #173404; --green-text: #c0dd97;
+    --amber-bg: #412402; --amber-text: #fac775;
+    --red-bg:   #501313; --red-text:   #f7c1c1;
+    --blue-bg:  #042c53; --blue-text:  #b5d4f4;
+  }
+}
+body { font-family: system-ui,-apple-system,sans-serif; background: var(--bg); color: var(--text); padding: 16px; max-width: 560px; margin: 0 auto; -webkit-text-size-adjust: 100%; }
+h1 { font-size: 19px; font-weight: 500; margin-bottom: 2px; }
+.sub { font-size: 12px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; }
+.sec { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); margin: 16px 0 7px; }
+.mode-wrap { display: flex; gap: 6px; margin-bottom: 14px; }
+.mbtn { flex: 1; padding: 9px 6px; border-radius: 8px; font-size: 11px; font-weight: 500; border: 1px solid var(--border2); background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit; text-align: center; line-height: 1.4; }
+.mbtn.act { background: var(--bg); color: var(--text); box-shadow: 0 0 0 2px var(--blue); border-color: var(--blue); }
+.inputs { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+@media (max-width: 380px) { .inputs { grid-template-columns: 1fr; } }
+.field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+.field input { display: block; width: 100%; font-size: 18px; font-weight: 500; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border2); background: var(--bg); color: var(--text); font-family: inherit; -webkit-appearance: none; appearance: none; }
+.field input:focus { outline: none; box-shadow: 0 0 0 2px var(--blue); }
+.hint { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.warn { border-radius: 10px; padding: 11px 14px; font-size: 13px; font-weight: 500; line-height: 1.6; margin-bottom: 12px; border: 1px solid; display: none; }
+.wr { background: var(--red-bg);   color: var(--red-text);   border-color: var(--red);   }
+.wa { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber); }
+.diagram-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 14px; }
+canvas { display: block; width: 100%; }
+.big3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.bcard { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 8px; text-align: center; }
+.blabel { font-size: 10px; color: var(--text3); margin-bottom: 3px; }
+.bnum { font-size: 22px; font-weight: 600; line-height: 1.05; }
+.bunit { font-size: 10px; color: var(--text2); margin-top: 3px; }
+.cg { color: var(--green); } .cw { color: var(--amber); } .cr { color: var(--red); }
+.banner { border-radius: 10px; padding: 11px 14px; font-size: 13px; font-weight: 600; text-align: center; line-height: 1.5; margin-bottom: 14px; border: 1px solid; }
+.bok  { background: var(--green-bg); color: var(--green-text); border-color: var(--green); }
+.bwn  { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber); }
+.bfl  { background: var(--red-bg);   color: var(--red-text);   border-color: var(--red);   }
+.binfo{ background: var(--blue-bg);  color: var(--blue-text);  border-color: var(--blue);  }
+.lsnote { background: var(--blue-bg); color: var(--blue-text); border: 1px solid var(--blue); border-radius: 10px; padding: 10px 13px; font-size: 12px; line-height: 1.7; margin-bottom: 14px; display: none; }
+.breakdown { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 4px 14px; margin-bottom: 14px; }
+.row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--border); gap: 10px; font-size: 13px; }
+.row:last-child { border-bottom: none; }
+.rl { color: var(--text2); flex: 1; line-height: 1.4; }
+.rv { font-weight: 600; font-family: ui-monospace,monospace; font-size: 12px; text-align: right; flex-shrink: 0; }
+.note { font-size: 11px; color: var(--text3); line-height: 1.7; padding-top: 10px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<h1>Highline Force Calculator</h1>
+<p class="sub">180° = flat line &nbsp;·&nbsp; Works for highlines &amp; load sharing anchors</p>
+
+<div class="sec">Solve for</div>
+<div class="mode-wrap">
+  <button class="mbtn act" id="mA" onclick="setMode('angle')">Sag + tension<br><span style="font-weight:400">know angle</span></button>
+  <button class="mbtn"     id="mS" onclick="setMode('sag')">Angle + tension<br><span style="font-weight:400">know sag ft</span></button>
+  <button class="mbtn"     id="mT" onclick="setMode('tension')">Angle + sag<br><span style="font-weight:400">know tension</span></button>
+</div>
+
+<div class="sec">Inputs</div>
+<div class="inputs">
+  <div class="field">
+    <label for="iW">Load (lbs)</label>
+    <input type="number" id="iW" value="300" min="1" step="10" inputmode="numeric">
+    <div class="hint">total suspended</div>
+  </div>
+  <div class="field">
+    <label for="iD">Span (ft)</label>
+    <input type="number" id="iD" value="40" min="1" step="1" inputmode="numeric">
+    <div class="hint">A to B</div>
+  </div>
+  <div class="field" id="fA">
+    <label for="iA">Angle (°)</label>
+    <input type="number" id="iA" value="150" min="1" max="179" step="1" inputmode="numeric">
+    <div class="hint">included, 180°=flat</div>
+  </div>
+  <div class="field" id="fG" style="display:none">
+    <label for="iG">Sag (ft)</label>
+    <input type="number" id="iG" value="4" min="0.1" step="0.5" inputmode="decimal">
+    <div class="hint">midspan drop</div>
+  </div>
+  <div class="field" id="fT" style="display:none">
+    <label for="iT">Tension (lbs)</label>
+    <input type="number" id="iT" value="500" min="1" step="10" inputmode="numeric">
+    <div class="hint">per anchor</div>
+  </div>
+</div>
+
+<div class="warn" id="xwarn"></div>
+<div class="lsnote" id="xlsn"></div>
+
+<div class="sec">Diagram</div>
+<div class="diagram-wrap"><canvas id="xc"></canvas></div>
+
+<div class="big3">
+  <div class="bcard"><div class="blabel">Included angle</div><div class="bnum" id="xang">—</div><div class="bunit">degrees</div></div>
+  <div class="bcard"><div class="blabel">Tension / anchor</div><div class="bnum" id="xtens">—</div><div class="bunit" id="xtu">lbs</div></div>
+  <div class="bcard"><div class="blabel">Multiplier</div><div class="bnum" id="xmult">—</div><div class="bunit">× load</div></div>
+</div>
+
+<div class="banner bok" id="xbn">—</div>
+
+<div class="sec">Force breakdown</div>
+<div class="breakdown">
+  <div class="row"><span class="rl">Included angle</span><span class="rv" id="dang">—</span></div>
+  <div class="row"><span class="rl">Sag angle from horizontal</span><span class="rv" id="dsag_a">—</span></div>
+  <div class="row"><span class="rl">Sag at midspan</span><span class="rv" id="dsag">—</span></div>
+  <div class="row"><span class="rl">Rope tension (per anchor, each side)</span><span class="rv" id="dtens">—</span></div>
+  <div class="row"><span class="rl">Vertical component per anchor (= W ÷ 2)</span><span class="rv" id="dvert">—</span></div>
+  <div class="row"><span class="rl">Horizontal component — inward each side</span><span class="rv" id="dhoriz">—</span></div>
+</div>
+
+<p class="note">
+  Rope tension is continuous — a load cell anywhere in the line reads the single tension value shown above, not a combined total.<br>
+  Included angle = 180° − (2 × sag angle). Sag angle = 90° − (included angle ÷ 2).<br>
+  Highlines: aim for included angle ≥ 150° (≥ 15° sag angle).<br>
+  Load sharing anchors: keep included angle ≤ 90° (finger &amp; thumb rule).<br>
+  Static load only — dynamic, shock, and MA forces not included.<br>
+  ANSI Z359.2: 5,000 lb min single anchor. All systems must be approved by qualified personnel.
+</p>
+
+<script>
+(function(){
+  var mode = "angle";
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById("mA").className = "mbtn" + (m==="angle"?"   act":"");
+    document.getElementById("mS").className = "mbtn" + (m==="sag"?"   act":"");
+    document.getElementById("mT").className = "mbtn" + (m==="tension"?" act":"");
+    document.getElementById("fA").style.display = m==="angle"   ? "" : "none";
+    document.getElementById("fG").style.display = m==="sag"     ? "" : "none";
+    document.getElementById("fT").style.display = m==="tension" ? "" : "none";
+    go();
+  }
+
+  function st(id,v){ var e=document.getElementById(id); if(e) e.textContent=String(v); }
+  function sc(id,c){ var e=document.getElementById(id); if(e) e.className=c; }
+
+  function go(){
+    var W    = parseFloat(document.getElementById("iW").value)||300;
+    var span = parseFloat(document.getElementById("iD").value)||40;
+    if(W<=0) W=300; if(span<=0) span=40;
+
+    var ia, sagFt, sagRad, sagDeg, T;
+
+    if(mode==="angle"){
+      ia = parseFloat(document.getElementById("iA").value)||150;
+      if(ia<=0) ia=1; if(ia>=180) ia=179;
+      sagDeg = 90 - ia/2;
+      sagRad = sagDeg * Math.PI/180;
+      sagFt  = (span/2) * Math.tan(sagRad);
+      T      = W / (2*Math.sin(sagRad));
+    } else if(mode==="sag"){
+      sagFt  = parseFloat(document.getElementById("iG").value)||4;
+      if(sagFt<=0) sagFt=0.1;
+      sagRad = Math.atan(sagFt/(span/2));
+      sagDeg = sagRad*180/Math.PI;
+      ia     = 180 - 2*sagDeg;
+      T      = W / (2*Math.sin(sagRad));
+    } else {
+      T = parseFloat(document.getElementById("iT").value)||500;
+      var minT = W/2 + 0.1;
+      if(T<=W/2) T=minT;
+      var sinS = W/(2*T);
+      if(sinS>1) sinS=1;
+      sagRad = Math.asin(sinS);
+      sagDeg = sagRad*180/Math.PI;
+      ia     = 180 - 2*sagDeg;
+      sagFt  = (span/2)*Math.tan(sagRad);
+    }
+
+    // Recompute consistently
+    sagDeg = 90 - ia/2;
+    sagRad = sagDeg * Math.PI/180;
+    T      = W / (2*Math.sin(sagRad));
+    sagFt  = (span/2)*Math.tan(sagRad);
+    var Tv = W/2;
+    var Th = T*Math.cos(sagRad);
+    var mul= T/W;
+    var ok = T<=5000;
+    var isLS = ia <= 120;
+
+    // Warning / load sharing note
+    var we  = document.getElementById("xwarn");
+    var lsn = document.getElementById("xlsn");
+    if(isLS){
+      we.style.display = "none";
+      lsn.style.display = "block";
+      if(ia<=90){
+        lsn.textContent = "Load sharing anchor: "+ia.toFixed(1)+"° included — within the 90° guideline (finger & thumb). Each leg carries "+Math.round(mul*100)+"% of the load.";
+      } else {
+        lsn.textContent = "Load sharing anchor: "+ia.toFixed(1)+"° — exceeds 90° guideline. Widen anchor spread to reduce leg tension. Each leg carries "+Math.round(mul*100)+"% of the load.";
+      }
+    } else {
+      lsn.style.display = "none";
+      if(ia < 160){
+        we.className="warn wr"; we.style.display="block";
+        we.textContent="DANGER: "+ia.toFixed(1)+"° included angle is critically shallow — "+Math.round(T)+" lbs/anchor ("+mul.toFixed(1)+"× load). Do not rig without qualified supervision.";
+      } else if(ia < 170){
+        we.className="warn wa"; we.style.display="block";
+        we.textContent="Caution: "+ia.toFixed(1)+"° gives "+mul.toFixed(1)+"× load multiplication. Verify anchor ratings. Aim for ≥ 150° included angle.";
+      } else {
+        we.style.display="none";
+      }
+    }
+
+    // Big 3
+    var ac = isLS ? (ia<=90?"bnum cg":"bnum cw") : (ia>=170?"bnum cg":ia>=150?"bnum cw":"bnum cr");
+    var tc = ok ? "bnum cw" : "bnum cr";
+    var mc = mul<=1.5?"bnum cg":mul<=3?"bnum cw":"bnum cr";
+    sc("xang",ac);  st("xang",  ia.toFixed(1)+"°");
+    sc("xtens",tc); st("xtens", Math.round(T));
+    st("xtu","lbs"+(ok?"":" ⚠"));
+    sc("xmult",mc); st("xmult", mul.toFixed(2)+"×");
+
+    // Banner
+    var bn=document.getElementById("xbn");
+    if(!ok){
+      bn.className="banner bfl";
+      bn.textContent="EXCEEDS Z359 — "+Math.round(T)+" lbs exceeds 5,000 lb anchor minimum";
+    } else if(isLS){
+      bn.className = ia<=90 ? "banner bok" : "banner bwn";
+      bn.textContent = ia<=90
+        ? Math.round(T)+" lbs/leg — ≤ 90° included angle ✓"
+        : Math.round(T)+" lbs/leg — angle > 90°, widen anchor spread";
+    } else if(ia<170){
+      bn.className="banner bwn";
+      bn.textContent=Math.round(T)+" lbs/anchor — shallow angle, verify ratings";
+    } else {
+      bn.className="banner bok";
+      bn.textContent=Math.round(T)+" lbs/anchor — meets ANSI Z359 5,000 lb minimum";
+    }
+
+    // Breakdown
+    st("dang",   ia.toFixed(1)+"°");
+    st("dsag_a", sagDeg.toFixed(1)+"° from horizontal");
+    st("dsag",   sagFt.toFixed(2)+" ft  ("+( sagFt*12).toFixed(1)+" in)");
+    st("dtens",  Math.round(T)+" lbs");
+    st("dvert",  Math.round(Tv)+" lbs");
+    st("dhoriz", Math.round(Th)+" lbs ← inward lateral");
+
+    draw(span, sagFt, W, T, ia, sagDeg);
+  }
+
+  function draw(span, sagFt, W, T, ia, sagDeg){
+    var cv  = document.getElementById("xc");
+    var CW  = cv.parentElement.clientWidth - 20;
+    if(CW<100) CW=300;
+    var CH  = Math.max(170, Math.min(220, Math.round(CW*0.40)));
+    var dpr = Math.min(window.devicePixelRatio||1, 3);
+    cv.width=CW*dpr; cv.height=CH*dpr;
+    cv.style.width=CW+"px"; cv.style.height=CH+"px";
+    var ctx=cv.getContext("2d");
+    ctx.scale(dpr,dpr);
+
+    var dk=window.matchMedia("(prefers-color-scheme:dark)").matches;
+    var rope  = dk?"#b4b2a9":"#3d3d3a";
+    var anc   = dk?"#378add":"#185fa5";
+    var load  = dk?"#ba7517":"#854f0b";
+    var force = dk?"#e24b4a":"#a32d2d";
+    var horiz = dk?"#639922":"#3b6d11";
+    var dim   = dk?"#6b6a64":"#888780";
+    var lbl   = dk?"#c2c0b6":"#3d3d3a";
+    var arc   = dk?"#378add":"#185fa5";
+
+    ctx.clearRect(0,0,CW,CH);
+    var sm=CW<340;
+    var mg=sm?50:66, Ax=mg, Bx=CW-mg, Ay=sm?44:52;
+    var mx=(Ax+Bx)/2;
+    var spx=Math.min((sagFt/(span/2))*(Bx-Ax)*0.30, CH-100);
+    var my=Ay+spx;
+    var fs=sm?10:11;
+    var fnt=fs+"px system-ui,-apple-system,sans-serif";
+
+    // Rope
+    ctx.strokeStyle=rope; ctx.lineWidth=2.5; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(Ax,Ay); ctx.quadraticCurveTo(mx,my+spx*0.18,mx,my); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(mx,my); ctx.quadraticCurveTo(mx,my+spx*0.18,Bx,Ay); ctx.stroke();
+
+    // Reference line 180°
+    ctx.strokeStyle=dim; ctx.lineWidth=0.7; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(Ax,Ay); ctx.lineTo(Bx,Ay); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font=(fs-1)+"px system-ui,-apple-system,sans-serif";
+    ctx.fillStyle=dim; ctx.textAlign="center";
+    ctx.fillText("180° (flat reference)",mx,Ay-5);
+
+    // Anchors
+    [Ax,Bx].forEach(function(x){
+      var d=x===Ax?-1:1;
+      ctx.strokeStyle=dim; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(x+d*7,Ay-14); ctx.lineTo(x+d*7,Ay+16); ctx.stroke();
+      for(var i=0;i<5;i++){
+        ctx.beginPath(); ctx.moveTo(x+d*7,Ay-13+i*7); ctx.lineTo(x+d*20,Ay-7+i*7); ctx.stroke();
+      }
+      ctx.fillStyle=anc;
+      ctx.beginPath(); ctx.arc(x,Ay,sm?5:7,0,Math.PI*2); ctx.fill();
+    });
+    ctx.font=fnt; ctx.fillStyle=lbl; ctx.textAlign="center";
+    ctx.fillText("A",Ax,Ay-(sm?18:23));
+    ctx.fillText("B",Bx,Ay-(sm?18:23));
+
+    // Load arrow
+    var dl=Math.min(28,CH-my-24);
+    if(dl>8){
+      ctx.strokeStyle=load; ctx.fillStyle=load; ctx.lineWidth=1.8;
+      ctx.beginPath(); ctx.moveTo(mx,my); ctx.lineTo(mx,my+dl); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(mx,my+dl); ctx.lineTo(mx-5,my+dl-10); ctx.lineTo(mx+5,my+dl-10); ctx.closePath(); ctx.fill();
+      ctx.font=fnt; ctx.fillStyle=load; ctx.textAlign="center";
+      ctx.fillText("W="+W+"lbs",mx,my+dl+14);
+    }
+
+    // Tension vector
+    var ra=Math.atan2(my-Ay,mx-Ax);
+    var vl=sm?40:52;
+    var tvx=Math.cos(ra)*vl, tvy=Math.sin(ra)*vl;
+    ctx.strokeStyle=force; ctx.fillStyle=force; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(Ax,Ay); ctx.lineTo(Ax+tvx,Ay+tvy); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(Ax+tvx,Ay+tvy);
+    ctx.lineTo(Ax+tvx-7*Math.cos(ra-0.4),Ay+tvy-7*Math.sin(ra-0.4));
+    ctx.lineTo(Ax+tvx-7*Math.cos(ra+0.4),Ay+tvy-7*Math.sin(ra+0.4));
+    ctx.closePath(); ctx.fill();
+
+    // Horizontal component
+    ctx.strokeStyle=horiz; ctx.lineWidth=1.2; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(Ax,Ay); ctx.lineTo(Ax+Math.cos(ra)*vl*0.85,Ay); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Included angle arc — between the two rope directions at A
+    var arcR=28;
+    ctx.strokeStyle=arc; ctx.lineWidth=1.8;
+    ctx.beginPath(); ctx.arc(Ax,Ay,arcR,-ra,ra,false); ctx.stroke();
+    ctx.font="bold "+fnt; ctx.fillStyle=arc; ctx.textAlign="left";
+    ctx.fillText(ia.toFixed(0)+"°",Ax+arcR+4,Ay+5);
+
+    // Tension label
+    ctx.font="bold "+fnt; ctx.fillStyle=force; ctx.textAlign="left";
+    ctx.fillText("T="+Math.round(T)+"lb",Ax+tvx+3,Ay+tvy-3);
+
+    // Sag marker
+    if(spx>18){
+      ctx.strokeStyle=dim; ctx.lineWidth=0.7; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(mx+16,Ay); ctx.lineTo(mx+16,my); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font=(fs-1)+"px system-ui,-apple-system,sans-serif";
+      ctx.fillStyle=dim; ctx.textAlign="left";
+      ctx.fillText(sagFt.toFixed(1)+"ft",mx+19,(Ay+my)/2+4);
+    }
+
+    ctx.font=fnt; ctx.fillStyle=dim; ctx.textAlign="center";
+    ctx.fillText("span = "+span+" ft",mx,CH-5);
+  }
+
+  var ids=["iW","iD","iA","iG","iT"];
+  var evs=["input","change","keyup","blur"];
+  ids.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) evs.forEach(function(ev){ el.addEventListener(ev,go); });
+  });
+
+  var rt;
+  window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(go,80); });
+  go();
+  setTimeout(go,120);
+}());
+</script>
+</body>
+</html>
