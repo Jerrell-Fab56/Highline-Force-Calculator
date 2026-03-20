@@ -338,13 +338,27 @@ canvas { display: block; width: 100%; }
 
     ctx.clearRect(0,0,CW,CH);
     var sm=CW<340;
-    var mg=sm?50:66, Ax=mg, Bx=CW-mg, Ay=sm?44:52;
-    var mx=(Ax+Bx)/2;
-    // Scale sag pixels to use most of available canvas height
+    var mg=sm?50:66;
+    var cx=CW/2; // center of canvas
+
+    // Scale anchor spread dynamically based on sag geometry
+    // At shallow angles (near 180°) anchors spread wide
+    // At steep angles (near 5°) anchors compress toward center — nearly parallel legs
     var sagAngleRad = Math.atan(sagFt/(span/2));
+    var sagAngleDeg = sagAngleRad * 180/Math.PI;
+    // Spread fraction: 1.0 = full width, shrinks as angle steepens
+    // At 90° sag (5° included) anchors should be very close together
+    var maxHalfSpread = CW/2 - mg;
+    var spreadFrac = Math.min(1.0, Math.max(0.08, sagAngleDeg / 45));
+    var halfSpread = maxHalfSpread * spreadFrac;
+    var Ax = cx - halfSpread;
+    var Bx = cx + halfSpread;
+    var Ay = sm?44:52;
+    var mx = cx;
+
+    // Scale sag pixels to use most of available canvas height
     var maxSpx = CH - 95;
-    // Use actual geometry ratio but scale to fit canvas nicely
-    var spx = Math.min(maxSpx, Math.max(8, maxSpx * (sagFt/(span/2)) / Math.tan(85*Math.PI/180)));
+    var spx = Math.min(maxSpx, Math.max(8, maxSpx * Math.min(1.0, sagAngleDeg / 45)));
     var my=Ay+spx;
     var fs=sm?10:11;
     var fnt=fs+"px system-ui,-apple-system,sans-serif";
