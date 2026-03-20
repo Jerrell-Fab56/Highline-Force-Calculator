@@ -135,6 +135,7 @@ canvas { display: block; width: 100%; }
   <div class="row"><span class="rl">Rope tension (per anchor, each side)</span><span class="rv" id="dtens">—</span></div>
   <div class="row"><span class="rl">Vertical component per anchor (= W ÷ 2)</span><span class="rv" id="dvert">—</span></div>
   <div class="row"><span class="rl">Horizontal component — inward each side</span><span class="rv" id="dhoriz">—</span></div>
+  <div class="row"><span class="rl">Theoretical rope length (parabolic approx)</span><span class="rv" id="dropelen">—</span></div>
 </div>
 
 <p class="note">
@@ -150,10 +151,13 @@ canvas { display: block; width: 100%; }
 (function(){
   var mode = "angle";
 
+  // Expose to global scope so onclick attributes can reach it
+  window.setMode = function(m) { setMode(m); };
+
   function setMode(m) {
     mode = m;
-    document.getElementById("mA").className = "mbtn" + (m==="angle"?"   act":"");
-    document.getElementById("mS").className = "mbtn" + (m==="sag"?"   act":"");
+    document.getElementById("mA").className = "mbtn" + (m==="angle"?" act":"");
+    document.getElementById("mS").className = "mbtn" + (m==="sag"?" act":"");
     document.getElementById("mT").className = "mbtn" + (m==="tension"?" act":"");
     document.getElementById("fA").style.display = m==="angle"   ? "" : "none";
     document.getElementById("fG").style.display = m==="sag"     ? "" : "none";
@@ -266,6 +270,11 @@ canvas { display: block; width: 100%; }
     st("dtens",  Math.round(T)+" lbs");
     st("dvert",  Math.round(Tv)+" lbs");
     st("dhoriz", Math.round(Th)+" lbs ← inward lateral");
+
+    // Rope length — parabolic approximation: L ≈ span * sqrt(1 + (8/3)*(sag/span)^2)
+    // More accurate than simple Pythagoras for typical sag ratios
+    var ropeLen = span * Math.sqrt(1 + (8/3) * Math.pow(sagFt/span, 2));
+    st("dropelen", ropeLen.toFixed(2)+" ft  ("+(ropeLen*12).toFixed(0)+" in)");
 
     draw(span, sagFt, W, T, ia, sagDeg);
   }
