@@ -316,10 +316,10 @@ canvas { display: block; width: 100%; }
     var cv  = document.getElementById("xc");
     var CW  = cv.parentElement.clientWidth - 20;
     if(CW<100) CW=300;
-    // Scale canvas height based on sag angle - steeper angles need more vertical space
-    var sagRatioVis = sagFt / (span / 2); // tan of sag angle
-    var canvasRatio = Math.min(0.75, Math.max(0.35, sagRatioVis * 0.8 + 0.35));
-    var CH  = Math.max(170, Math.min(400, Math.round(CW * canvasRatio)));
+    // Canvas height scales with sag/span ratio to give room for steep angles
+    var sagRatioVis = sagFt / (span / 2);
+    var canvasRatio = Math.min(0.85, Math.max(0.38, sagRatioVis * 0.5 + 0.38));
+    var CH  = Math.max(180, Math.min(440, Math.round(CW * canvasRatio)));
     var dpr = Math.min(window.devicePixelRatio||1, 3);
     cv.width=CW*dpr; cv.height=CH*dpr;
     cv.style.width=CW+"px"; cv.style.height=CH+"px";
@@ -341,24 +341,38 @@ canvas { display: block; width: 100%; }
     var mg=sm?50:66;
     var cx=CW/2; // center of canvas
 
-    // Scale anchor spread dynamically based on sag geometry
-    // At shallow angles (near 180°) anchors spread wide
-    // At steep angles (near 5°) anchors compress toward center — nearly parallel legs
+    // Preserve true rope geometry in the diagram
+    // The rope shape is defined by two values: span (horiz) and sagFt (vert)
+    // We scale these proportionally to fit the canvas, keeping aspect ratio correct.
     var sagAngleRad = Math.atan(sagFt/(span/2));
     var sagAngleDeg = sagAngleRad * 180/Math.PI;
-    // Spread fraction: 1.0 = full width, shrinks as angle steepens
-    // At 90° sag (5° included) anchors should be very close together
-    var maxHalfSpread = CW/2 - mg;
-    var spreadFrac = Math.min(1.0, Math.max(0.08, sagAngleDeg / 45));
-    var halfSpread = maxHalfSpread * spreadFrac;
+
+    // Available drawing area
+    var maxHalfSpread = CW/2 - mg;  // max horizontal room each side of center
+    var maxSpx = CH - 95;            // max vertical room for sag
+
+    // Scale by whichever dimension is the constraint
+    // span maps to horizontal, sagFt maps to vertical
+    // scale factor: pixels per foot
+    var scaleH = maxHalfSpread / (span/2);   // if span fills horizontal
+    var scaleV = maxSpx / sagFt;              // if sag fills vertical
+    var scale  = Math.min(scaleH, scaleV);   // use the tighter constraint
+
+    // Cap scale so very small spans don't go huge, floor so large spans don't vanish
+    scale = Math.min(scale, 180);
+    scale = Math.max(scale, 4);
+
+    var halfSpread = (span/2) * scale;
+    var spx        = sagFt * scale;
+
+    // Keep anchors within canvas bounds
+    halfSpread = Math.min(halfSpread, maxHalfSpread);
+    spx        = Math.min(spx, maxSpx);
+
     var Ax = cx - halfSpread;
     var Bx = cx + halfSpread;
     var Ay = sm?44:52;
     var mx = cx;
-
-    // Scale sag pixels to use most of available canvas height
-    var maxSpx = CH - 95;
-    var spx = Math.min(maxSpx, Math.max(8, maxSpx * Math.min(1.0, sagAngleDeg / 45)));
     var my=Ay+spx;
     var fs=sm?10:11;
     var fnt=fs+"px system-ui,-apple-system,sans-serif";
@@ -418,12 +432,20 @@ canvas { display: block; width: 100%; }
     ctx.beginPath(); ctx.moveTo(Ax,Ay); ctx.lineTo(Ax+Math.cos(ra)*vl*0.85,Ay); ctx.stroke();
     ctx.setLineDash([]);
 
-    // Included angle arc — between the two rope directions at A
-    var arcR=28;
+    // Included angle arc drawn at the apex (load point) spanning both rope legs
+    // Direction from midpoint toward A (up-left)
+    var toA = Math.atan2(Ay-my, Ax-mx);
+    // Direction from midpoint toward B (up-right)
+    var toB = Math.atan2(Ay-my, Bx-mx);
+    // Arc radius — scale with diagram size
+    var arcR = Math.max(18, Math.min(40, halfSpread * 0.45));
     ctx.strokeStyle=arc; ctx.lineWidth=1.8;
-    ctx.beginPath(); ctx.arc(Ax,Ay,arcR,-ra,ra,false); ctx.stroke();
-    ctx.font="bold "+fnt; ctx.fillStyle=arc; ctx.textAlign="left";
-    ctx.fillText(ia.toFixed(0)+"°",Ax+arcR+4,Ay+5);
+    ctx.beginPath(); ctx.arc(mx, my, arcR, toA, toB, false); ctx.stroke();
+    // Label centered above the arc, inside the V
+    var labelY = my - arcR - 6;
+    var labelX = mx;
+    ctx.font="bold "+fnt; ctx.fillStyle=arc; ctx.textAlign="center";
+    ctx.fillText(ia.toFixed(0)+"°", labelX, labelY);
 
     // Tension label
     ctx.font="bold "+fnt; ctx.fillStyle=force; ctx.textAlign="left";
